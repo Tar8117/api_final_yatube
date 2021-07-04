@@ -1,19 +1,60 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
-from .models import Comment, Post
+from .models import Comment, Post, Group, Follow, User
 
 
 class PostSerializer(serializers.ModelSerializer):
-    author = serializers.ReadOnlyField(source='author.username')
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field='username'
+    )
+    text = serializers.CharField(required=True)
 
     class Meta:
-        fields = ('id', 'text', 'author', 'pub_date')
         model = Post
+        fields = ('id', 'text', 'author', 'pub_date')
+        read_only_fields = ('id', 'pub_date', 'author')
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.ReadOnlyField(source='author.username')
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field='username'
+    )
+    post = serializers.SlugRelatedField(read_only=True, slug_field='id')
 
     class Meta:
-        fields = ('id', 'author', 'post', 'text', 'created')
         model = Comment
+        fields = '__all__'
+        read_only_fields = ('post',)
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        slug_field='username', queryset=User.objects.all(),
+        default=serializers.CurrentUserDefault()
+    )
+    following = serializers.SlugRelatedField(
+        slug_field='username', queryset=User.objects.all()
+    )
+
+    def validate(self, data):
+        if data['user'] == data['following']:
+            raise serializers.ValidationError('Нельзя подписаться на себя')
+        return data
+
+    class Meta:
+        model = Follow
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(), fields=['user', 'following'],
+                message='Нельзя подписаться, если уже подписан'
+            )
+        ]
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = '__all__'
+        read_only_fields = ('id',)
