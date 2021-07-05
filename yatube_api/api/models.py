@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import UniqueConstraint
+from django.db.models import UniqueConstraint, CheckConstraint, Q, F
 
 User = get_user_model()
 
@@ -42,14 +42,19 @@ class Comment(models.Model):
 
 class Follow(models.Model):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='follower'
+        User, on_delete=models.CASCADE, related_name='followers'
     )
     following = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='following'
+        User, on_delete=models.CASCADE, related_name='followings'
     )
 
+    # может так?
     class Meta:
-        UniqueConstraint(
-            name='unique',
-            fields=['user', 'following']
-        )
+        constraints = [
+            UniqueConstraint(
+                fields=['user', 'following'], name='unique_follow'
+            ),
+            CheckConstraint(
+                check=~Q(user=F('following')), name='self_follow_ban'
+            )
+        ]

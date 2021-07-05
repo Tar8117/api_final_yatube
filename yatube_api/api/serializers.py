@@ -13,14 +13,15 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ('id', 'text', 'author', 'pub_date')
-        read_only_fields = ('id', 'pub_date', 'author')
 
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True, slug_field='username'
     )
-    post = serializers.SlugRelatedField(read_only=True, slug_field='id')
+    # post = serializers.SlugRelatedField(read_only=True, slug_field='id')
+    # ничего не изменилось насколько я понял, в мета снизу и так указал
+    # что post - рид онли
 
     class Meta:
         model = Comment
@@ -45,6 +46,11 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = '__all__'
+        # только чтение для поля юзер указал здесь, потому что на уровне поля
+        # если указываю, то все тесты фейлятся с ошибкой:
+        # AssertionError: Relational fields should not provide a
+        # `queryset` argument, when setting read_only=`True`.
+        read_only_fields = ('user',)
         validators = [
             UniqueTogetherValidator(
                 queryset=Follow.objects.all(), fields=['user', 'following'],
@@ -57,4 +63,5 @@ class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = '__all__'
-        read_only_fields = ('id',)
+        # read_only_fields = ('id',) не нужно объявлять явно, потому что,
+        # фреймворк это сам поймет, за счет того, что id это первичный ключ))
