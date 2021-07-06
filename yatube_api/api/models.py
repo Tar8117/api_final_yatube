@@ -48,7 +48,6 @@ class Follow(models.Model):
         User, on_delete=models.CASCADE, related_name='followings'
     )
 
-    # может так?
     class Meta:
         constraints = [
             UniqueConstraint(

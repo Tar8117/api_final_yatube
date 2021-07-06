@@ -14,6 +14,10 @@ from .serializers import (
 )
 
 
+class ListCreateViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
+    pass
+
+
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
@@ -39,7 +43,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Comment.objects.filter(post=post)
 
 
-class FollowViewSet(viewsets.ModelViewSet):
+class FollowViewSet(ListCreateViewSet):
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     permission_classes = [IsAuthenticated]
@@ -53,7 +57,7 @@ class FollowViewSet(viewsets.ModelViewSet):
         return Follow.objects.filter(following=self.request.user)
 
 
-class GroupViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
+class GroupViewSet(ListCreateViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
